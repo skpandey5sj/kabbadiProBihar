@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kabaddi Pro Control</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card: rgba(30, 41, 59, 0.7);
+      --glow: 0 0 20px rgba(59, 130, 246, 0.4);
+    }
+    body {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      background-attachment: fixed;
+    }
+    .glass {
+      background: var(--card);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    .score-glow {
+      text-shadow: 0 0 30px currentColor;
+    }
+    .btn-hover {
+      transition: all 0.15s ease;
+    }
+    .btn-hover:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+    }
+    .active-timer {
+      color: #34d399;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; }
+      50%     { opacity: 0.65; }
+    }
+    input:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.5);
+    }
+    .raiding-team { font-size: 2.2rem; font-weight: bold; color: #fbbf24; }
+    @media (max-width: 768px) {
+      .grid-cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+      .text-8xl { font-size: 5rem; }
+      .text-6xl { font-size: 4rem; }
+      header { flex-direction: column; gap: 1rem; }
+    }
+  </style>
+</head>
+<body class="text-gray-100 min-h-screen font-sans">
+
+<header class="bg-gradient-to-r from-indigo-950 to-slate-950 shadow-xl">
+  <div class="container mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+    <div class="flex items-center gap-4">
+      <h1 class="text-2xl md:text-3xl font-black tracking-tight">Kabaddi Pro</h1>
+      <div class="flex items-center gap-3">
+        <button id="vmixBtn" class="bg-amber-600 hover:bg-amber-500 px-4 py-2 rounded-lg font-semibold transition btn-hover">
+          <i class="fa-solid fa-plug mr-1"></i> vMix
+        </button>
+        <span id="vmixStatus" class="text-sm text-gray-400">Not connected</span>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap gap-3 justify-center sm:justify-end">
+      <button id="swapTeamsBtn" class="bg-indigo-600 hover:bg-indigo-500 px-5 py-2 rounded-lg font-semibold btn-hover">
+        <i class="fa-solid fa-right-left mr-1"></i> Swap Teams
+      </button>
+      <button id="resetBtn" class="bg-rose-700 hover:bg-rose-600 px-5 py-2 rounded-lg font-semibold btn-hover">
+        <i class="fa-solid fa-arrows-rotate-left mr-1"></i> Reset All
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="container mx-auto px-4 py-6">
+
+  <!-- Half + Controls -->
+  <div class="mb-6 flex flex-col sm:flex-row sm:items-center gap-4 flex-wrap">
+    <label class="font-semibold text-lg">Half:</label>
+    <select id="halfSelect" class="bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 w-full sm:w-auto">
+      <option value="1">1st Half</option>
+      <option value="2">2nd Half</option>
+    </select>
+  </div>
+
+  <!-- Preview Scoreboard -->
+  <div class="glass rounded-2xl p-6 md:p-10 mb-10">
+    <div class="flex flex-col md:flex-row justify-between items-center gap-8 text-center">
+      <div>
+        <h2 id="homeNamePrev" class="text-3xl md:text-4xl font-bold text-yellow-400 mb-2">HOME</h2>
+        <div id="homeScorePrev" class="text-6xl md:text-8xl font-black score-glow text-yellow-300">0</div>
+      </div>
+
+      <div class="text-center">
+        <div id="halfPrev" class="text-4xl md:text-5xl font-bold mb-3">1ST HALF</div>
+        <div class="text-xl md:text-2xl opacity-80 font-semibold flex items-center justify-center gap-8">
+          <span id="homeRaidArrow" class="raiding-team"></span>
+          <span id="raidingTeamPrev" class="font-bold">RAID: HOME</span>
+          <span id="awayRaidArrow" class="raiding-team"></span>
+        </div>
+        <div class="mt-6 text-2xl md:text-3xl font-mono">
+          <span id="gameTimerPrev" class="active-timer">20:00</span>
+            •  
+          <span id="raidTimerPrev" class="active-timer">30</span>
+        </div>
+      </div>
+
+      <div>
+        <h2 id="awayNamePrev" class="text-3xl md:text-4xl font-bold text-orange-400 mb-2">AWAY</h2>
+        <div id="awayScorePrev" class="text-6xl md:text-8xl font-black score-glow text-orange-300">0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+    <!-- Game Timer (Main Clock) -->
+    <div class="glass rounded-xl p-6">
+      <h3 class="text-xl font-bold mb-4 text-center">Main Clock</h3>
+      <div id="gameTimerCtrl" class="text-5xl font-mono font-bold text-center mb-6 active-timer cursor-pointer editable">20:00</div>
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <button data-timer-adjust="60" class="bg-emerald-700 hover:bg-emerald-600 py-3 rounded btn-hover">+60s</button>
+        <button data-timer-adjust="-60" class="bg-rose-700 hover:bg-rose-600 py-3 rounded btn-hover">-60s</button>
+        <button data-timer-adjust="10" class="bg-emerald-800 hover:bg-emerald-700 py-3 rounded btn-hover">+10s</button>
+        <button data-timer-adjust="-10" class="bg-rose-800 hover:bg-rose-700 py-3 rounded btn-hover">-10s</button>
+      </div>
+      <div class="grid grid-cols-3 gap-3">
+        <button id="startGame" class="bg-emerald-600 py-3 rounded font-bold btn-hover">Start</button>
+        <button id="pauseGame" class="bg-amber-600 py-3 rounded font-bold btn-hover">Pause</button>
+        <button id="resetGame" class="bg-slate-700 py-3 rounded font-bold btn-hover">Reset</button>
+      </div>
+    </div>
+
+    <!-- Raid Timer -->
+    <div class="glass rounded-xl p-6">
+      <h3 class="text-xl font-bold mb-4 text-center">Raid Timer</h3>
+      <div id="raidTimerCtrl" class="text-5xl font-mono font-bold text-center mb-6 active-timer">30</div>
+      <div class="grid grid-cols-3 gap-3">
+        <button id="raidIn" class="bg-green-600 py-4 rounded font-bold btn-hover text-lg">RAID IN</button>
+        <button id="raidOut" class="bg-red-600 py-4 rounded font-bold btn-hover text-lg">RAID OUT</button>
+        <button id="resetRaid" class="bg-slate-700 py-4 rounded font-bold btn-hover text-lg">Reset 30</button>
+      </div>
+    </div>
+
+    <!-- Home Team Controls -->
+    <div class="glass rounded-xl p-6 border-t-4 border-yellow-500">
+      <h3 id="homeNameCtrl" class="text-2xl font-bold mb-4 text-center cursor-pointer editable">HOME</h3>
+      <div id="homeScoreCtrl" class="text-6xl font-black text-center mb-6 cursor-pointer text-yellow-300 score-glow editable">0</div>
+
+      <div class="grid grid-cols-3 gap-2 mb-5">
+        <button data-home-score="1" class="bg-emerald-600 hover:bg-emerald-500 py-4 rounded btn-hover text-lg">+1</button>
+        <button data-home-score="2" class="bg-emerald-600 hover:bg-emerald-500 py-4 rounded btn-hover text-lg">+2</button>
+        <button data-home-score="4" class="bg-emerald-600 hover:bg-emerald-500 py-4 rounded btn-hover text-lg">+4</button>
+        <button data-home-score="-1" class="bg-rose-600 hover:bg-rose-500 py-4 rounded btn-hover text-lg">-1</button>
+        <button data-home-score="-2" class="bg-rose-600 hover:bg-rose-500 py-4 rounded btn-hover text-lg">-2</button>
+        <button data-home-score="-4" class="bg-rose-600 hover:bg-rose-500 py-4 rounded btn-hover text-lg">-4</button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 text-sm">
+        <button id="homeAllOut" class="bg-purple-700 hover:bg-purple-600 py-2 rounded btn-hover">All Out +2</button>
+        <button id="homeBonus" class="bg-blue-700 hover:bg-blue-600 py-2 rounded btn-hover">Bonus +1</button>
+      </div>
+    </div>
+
+    <!-- Away Team Controls -->
+    <div class="glass rounded-xl p-6 border-t-4 border-orange-500">
+      <h3 id="awayNameCtrl" class="text-2xl font-bold mb-4 text-center cursor-pointer editable">AWAY</h3>
+      <div id="awayScoreCtrl" class="text-6xl font-black text-center mb-6 cursor-pointer text-orange-300 score-glow editable">0</div>
+
+      <div class="grid grid-cols-3 gap-2 mb-5">
+        <button data-away-score="1" class="bg-emerald-600 hover:bg-emerald-500 py-4 rounded btn-hover text-lg">+1</button>
+        <button data-away-score="2" class="bg-emerald-600 hover:bg-emerald-500 py-4 rounded btn-hover text-lg">+2</button>
+        <button data-away-score="4" class="bg-emerald-600 hover:bg-emerald-500 py-4 rounded btn-hover text-lg">+4</button>
+        <button data-away-score="-1" class="bg-rose-600 hover:bg-rose-500 py-4 rounded btn-hover text-lg">-1</button>
+        <button data-away-score="-2" class="bg-rose-600 hover:bg-rose-500 py-4 rounded btn-hover text-lg">-2</button>
+        <button data-away-score="-4" class="bg-rose-600 hover:bg-rose-500 py-4 rounded btn-hover text-lg">-4</button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 text-sm">
+        <button id="awayAllOut" class="bg-purple-700 hover:bg-purple-600 py-2 rounded btn-hover">All Out +2</button>
+        <button id="awayBonus" class="bg-blue-700 hover:bg-blue-600 py-2 rounded btn-hover">Bonus +1</button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- vMix Connection Modal -->
+<div id="vmixModal" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center z-50">
+  <div class="glass p-8 rounded-2xl w-full max-w-md">
+    <h2 class="text-2xl font-bold mb-6">vMix Connection</h2>
+    <form id="vmixForm">
+      <div class="mb-4">
+        <label class="block mb-1">IP Address</label>
+        <input id="vmixIP" type="text" value="127.0.0.1" class="w-full p-3 bg-slate-800 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div class="mb-4">
+        <label class="block mb-1">Port</label>
+        <input id="vmixPort" type="number" value="8088" class="w-full p-3 bg-slate-800 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div class="mb-6">
+        <label class="block mb-1">Input (number or GUID)</label>
+        <input id="vmixInput" type="text" value="1" class="w-full p-3 bg-slate-800 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div class="flex gap-4 justify-end">
+        <button type="button" id="vmixClose" class="px-6 py-3 bg-slate-700 rounded-lg hover:bg-slate-600">Cancel</button>
+        <button type="submit" class="px-6 py-3 bg-emerald-600 rounded-lg hover:bg-emerald-500">Connect</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -114,11 +114,13 @@ function syncVmix() {
   if (!state.vmix.connected) return;
   const base = `http://${state.vmix.ip}:${state.vmix.port}/api/?`;
   const input = `Input=${encodeURIComponent(state.vmix.input)}`;
+  console.log(input);
+  
 
   const texts = [
     ["Team 1 Name.Text",        state.homeName],
     ["Team 2 Name.Text",        state.awayName],
-    ["Middle Band1.Text",        state.currentHalf === 1 ? "1ST HALF" : "2ND HALF"],
+    ["HALF NAME.Text",        state.currentHalf === 1 ? "1ST HALF" : "2ND HALF"],
     ["CLOCK.Text",       formatGameTimer(state.gameTime)],
     ["RAIDER_CLOCK.Text",       state.raidTime.toString()],
     ["HOME_SCORE.Text",       totalHome().toString()],

@@ -118,8 +118,8 @@ function syncVmix() {
   
 
   const texts = [
-    ["Team 1 Name.Text",        state.homeName],
-    ["Team 2 Name.Text",        state.awayName],
+    // ["Team 1 Name.Text",        state.homeName],
+    // ["Team 111 Name.Text",        state.awayName],
     ["HALF NAME.Text",        state.currentHalf === 1 ? "1ST HALF" : "2ND HALF"],
     ["CLOCK.Text",       formatGameTimer(state.gameTime)],
     ["RAIDER_CLOCK.Text",       state.raidTime.toString()],
